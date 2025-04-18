@@ -1,0 +1,25 @@
+from scapy.all import sniff, IP
+import requests
+
+# Set to store detected Roblox IPs
+roblox_ips = set()
+
+def check_ip(ip):
+    try:
+        response = requests.get(f"https://ipinfo.io/{ip}/json", timeout=3)
+        if "roblox" in response.text.lower():
+            return True
+    except:
+        pass
+    return False
+
+def packet_callback(packet):
+    if IP in packet:
+        ip_dst = packet[IP].dst
+        if ip_dst not in roblox_ips:
+            if check_ip(ip_dst):
+                roblox_ips.add(ip_dst)
+                print(f"[+] Roblox IP detected: {ip_dst}")
+
+print("[*] Monitoring network traffic... Press Ctrl+C to stop.")
+sniff(filter="ip", prn=packet_callback, store=0)
